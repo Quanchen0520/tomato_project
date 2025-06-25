@@ -59,6 +59,7 @@ class _SettingpageState extends State<Settingpage> {
                               height: 1,
                               child: Container(color: Colors.grey),
                             ),
+                            // 數字模式切換開關
                             Row(
                               children: [
                                 SizedBox(width: 16),
@@ -81,6 +82,7 @@ class _SettingpageState extends State<Settingpage> {
                   ),
                 ),
                 SizedBox(height: 8),
+                // 登出按鈕
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pushReplacementNamed('/login');
@@ -88,7 +90,8 @@ class _SettingpageState extends State<Settingpage> {
                   child: Text(
                     "Log out",
                     style: TextStyle(
-                      color: Colors.red,
+                      color: Colors.red.shade400,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
