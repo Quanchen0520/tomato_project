@@ -13,15 +13,15 @@ class _TaskpageState extends State<Taskpage> {
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/space.jpg'), // 放在 assets 資料夾
-            fit: BoxFit.cover, // 可選：cover、contain、fill
-          ),
-          // gradient: LinearGradient(
-          //   begin: Alignment.topLeft,
-          //   end: Alignment.bottomRight,
-          //   colors: [Colors.purple.shade400, Colors.blue.shade300],
+          // image: DecorationImage(
+          //   image: AssetImage('assets/space.jpg'), // 放在 assets 資料夾
+          //   fit: BoxFit.cover, // 可選：cover、contain、fill
           // ),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.purple.shade400, Colors.blue.shade300],
+          ),
         ),
         child: SafeArea(
           child: Center(
@@ -36,6 +36,23 @@ class _TaskpageState extends State<Taskpage> {
                     color: Colors.white,
                   ),
                 ),
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 16),
+                  child: Card(
+                    color: Colors.white70,
+                    child: ListTile(
+                      title: Text("read english"),
+                      subtitle: Text("work 0 minute, rest 0 minute"),
+                      trailing: IconButton(
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: Colors.red,
+                        ),
+                        onPressed: () async {},
+                      ),
+                    ),
+                  ),
+                )
               ],
             ),
           ),

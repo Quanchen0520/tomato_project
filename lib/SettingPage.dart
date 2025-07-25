@@ -49,12 +49,21 @@ class _SettingpageState extends State<Settingpage> {
                         height: 200,
                         child: ListView(
                           children: [
-                            ListTile(title: Text("Account Settings")),
+                            ListTile(
+                              title: Text("Account Settings"),
+                              onTap: () {},
+                            ),
                             SizedBox(
                               height: 1,
                               child: Container(color: Colors.grey),
                             ),
-                            ListTile(title: Text("Background")),
+                            ListTile(
+                              title: Text("Background"),
+                              onTap: () {
+                                // Navigator.of(context).pushReplacementNamed('/BackgroundSetting');
+                                _Dialog();
+                              },
+                            ),
                             SizedBox(
                               height: 1,
                               child: Container(color: Colors.grey),
@@ -101,6 +110,34 @@ class _SettingpageState extends State<Settingpage> {
           ),
         ),
       ),
+    );
+  }
+  void _Dialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Background Setting"),
+          content: SizedBox(
+            height: 250, // 給定固定高度
+            width: double.maxFinite,
+          ),
+          actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+            },
+            child: Text("OK"),
+          ),
+        ],
+        );
+      },
     );
   }
 }

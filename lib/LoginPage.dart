@@ -48,16 +48,21 @@ class _LoginpageState extends State<Loginpage> {
       if (success) {
         Navigator.of(context).pushReplacementNamed('/home');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login successful!'), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text('Login successful!'),
+            backgroundColor: Colors.green,
+          ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Incorrect account or password'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Incorrect account or password'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -282,64 +287,63 @@ class _LoginpageState extends State<Loginpage> {
           title: const Text('Reset you\'r Password'),
           content: SingleChildScrollView(
             child: ListBody(
-                children: <Widget>[
-                  Text("Enter account information"),
-                  SizedBox(height: 8),
-                  TextFormField(
-                    controller: _resetUsernameController, //
-                    decoration: InputDecoration(
-                      labelText: 'Account',
-                      prefixIcon: Icon(Icons.person_outline),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.grey.shade300,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.blue),
-                      ),
+              children: <Widget>[
+                Text("Enter account information"),
+                SizedBox(height: 8),
+                TextFormField(
+                  controller: _resetUsernameController, //
+                  decoration: InputDecoration(
+                    labelText: 'Account',
+                    prefixIcon: Icon(Icons.person_outline),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your account';
-                      }
-                      return null;
-                    },
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.blue),
+                    ),
                   ),
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: _resetEmailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      labelText: 'E-mail',
-                      prefixIcon: Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.purple),
-                      ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your account';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16),
+                TextFormField(
+                  controller: _resetEmailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'E-mail',
+                    prefixIcon: Icon(Icons.email_outlined),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter email';
-                      }
-                      if (!_isValidEmail(value)) {
-                        return 'Please enter a valid email format';
-                      }
-                      return null;
-                    },
-                  ),                ]
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.purple),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter email';
+                    }
+                    if (!_isValidEmail(value)) {
+                      return 'Please enter a valid email format';
+                    }
+                    return null;
+                  },
+                ),
+              ],
             ),
           ),
           actions: <Widget>[

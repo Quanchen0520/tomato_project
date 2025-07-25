@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tomato_project/AppPageController.dart';
+import 'package:tomato_project/BackgroundSettingPage.dart';
 import 'package:tomato_project/HomePage.dart';
 import 'package:tomato_project/LoginPage.dart';
 import 'package:tomato_project/RegisterPage.dart';
@@ -28,6 +29,7 @@ class MyApp extends StatelessWidget {
         '/register': (context) => RegisterPage(),
         '/home': (context) => Apppagecontroller(),
         '/setting': (context) => Settingpage(),
+        '/BackgroundSetting': (context) => Backgroundsettingpage()
       },
     );
   }
