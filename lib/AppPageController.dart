@@ -11,7 +11,7 @@ class Apppagecontroller extends StatefulWidget {
 }
 
 class _ApppagecontrollerState extends State<Apppagecontroller> {
-  final List<Widget> _pages = [Taskpage(), Homepage(), Settingpage()];
+  final List<Widget> _pages = [Taskpage(), Homepage(), SettingPage()];
 
   int currentPageIndex = 1;
 

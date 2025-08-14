@@ -8,9 +8,11 @@ plugins {
 android {
     namespace = "com.example.tomato_project"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
+        // 啟用 core library desugaring
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -41,4 +43,9 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // 這行是 core library desugaring 必須的
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }

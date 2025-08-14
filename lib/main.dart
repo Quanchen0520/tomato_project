@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => Loginpage(),
         '/register': (context) => RegisterPage(),
         '/home': (context) => Apppagecontroller(),
-        '/setting': (context) => Settingpage(),
+        '/setting': (context) => SettingPage(),
         '/BackgroundSetting': (context) => Backgroundsettingpage()
       },
     );

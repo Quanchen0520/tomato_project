@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:tomato_project/SettingPage.dart';
 import 'package:tomato_project/TaskPage.dart';
 import 'ClockPainter.dart';
+import 'dart:math';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -24,22 +25,39 @@ class _HomepageState extends State<Homepage>
   int breakDuration = 5;
   int totalDurationInSeconds = 1500;
   bool isTimerRunning = false;
+  bool isTimerPaused = false;
   bool isMusicPlaying = false;
   bool isWorkMode = true;
   bool onTask = false;
   bool showModel = false;
   String nowTask = "Please select a task";
+  double _progressRatio = 0.0;
+  double _pausedAngle = -pi / 2; // 暫停時保留指針角度
+  double _pausedProgressRatio = 0.0;
 
   // 初始化資源
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: totalDurationInSeconds),
-    );
+    // _animationController = AnimationController(
+    //   vsync: this,
+    //   duration: Duration(seconds: 1), // totalDurationInSeconds
+    // );
     _audioPlayer = AudioPlayer();
     _audioPlayer.setReleaseMode(ReleaseMode.loop);
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 1500), // 25分鐘
+    )
+      ..addListener(() {
+        setState(() {
+          _progressRatio = _animationController.value;
+          if (!isTimerRunning) {
+            _pausedAngle = -pi / 2 + (_progressRatio * 2 * pi);
+          }
+        });
+      });
   }
 
   // 釋放資源
@@ -54,34 +72,31 @@ class _HomepageState extends State<Homepage>
 
   // 開始計時
   void _startTimer() {
-    setState(() {
-      totalDurationInSeconds = (workDuration + breakDuration) * 60;
-      isTimerRunning = true;
-      _animationController.duration = Duration(seconds: totalDurationInSeconds);
-      _animationController.forward(from: 0.0);
-    });
-
-    _countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-      if (totalDurationInSeconds > 0) {
-        setState(() {
-          totalDurationInSeconds--;
-          _updateTimerMode();
-        });
-      } else {
-        _countdownTimer?.cancel();
-        setState(() {
-          isTimerRunning = false;
-        });
-      }
-    });
+    setState(() => isTimerRunning = true);
+    _animationController.forward();
   }
 
   // 停止計時
   void _pauseTimer() {
+    if (!isTimerRunning) return;
+    _pausedAngle = -pi / 2 + (_progressRatio * 2 * pi); // 暫停時記錄目前角度
+    _pausedProgressRatio = _progressRatio;
+    _countdownTimer?.cancel(); // 停止倒數
+    _animationController.stop(); // 停止動畫
+    setState(() => isTimerRunning = false); // 切換狀態
+  }
+
+  // 重設計時
+  void _resetTimer() {
     _countdownTimer?.cancel();
-    _animationController.stop();
+    _animationController.reset();
+
     setState(() {
       isTimerRunning = false;
+      _animationController.reset();
+      _progressRatio = 0.0;
+      _pausedProgressRatio = 0.0;
+      _pausedAngle = -pi / 2;
     });
   }
 
@@ -122,7 +137,12 @@ class _HomepageState extends State<Homepage>
                   onPressed: () {
                     _chooseTaskDialog();
                   },
-                  child: Text(nowTask, style: TextStyle(color: Colors.white)),
+                  child: Text(
+                      nowTask,
+                      style: TextStyle(
+                          color: Colors.white
+                      )
+                  ),
                 ),
                 SizedBox(height: 8),
                 // 工作/休息時間顯示
@@ -135,23 +155,28 @@ class _HomepageState extends State<Homepage>
                   ),
                 ),
                 // 計時器顯示
-                CustomPaint(
-                  painter: ClockPainter(
-                    isTimerRunning
-                        ? 1 -
-                            (totalDurationInSeconds /
-                                ((workDuration + breakDuration) * 60))
-                        : 0,
-                    workDuration,
-                    breakDuration,
-                  ),
-                  size: Size(300, 300),
+                AnimatedBuilder(
+                  animation: _animationController,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      painter: ClockPainter(
+                        progressRatio: _progressRatio,
+                        workDuration: 25,
+                        breakDuration: 5,
+                        isRunning: isTimerRunning,
+                        pausedNeedleAngle: _pausedAngle,
+                        pausedProgressRatio: _pausedProgressRatio,
+                      ),
+                      size: Size(300, 300),
+                    );
+                  },
                 ),
                 SizedBox(height: 12),
                 Center(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // 背景音樂播放鈕
                       IconButton(
                         onPressed: isMusicPlaying ? _stopMusic : _playMusic,
                         icon:
@@ -160,7 +185,7 @@ class _HomepageState extends State<Homepage>
                                 : Icon(Icons.music_off_sharp),
                         iconSize: 42,
                       ),
-                      // 開始暫停鈕
+                      // 計時開始暫停鈕
                       IconButton(
                         onPressed: isTimerRunning ? _pauseTimer : _startTimer,
                         icon:
@@ -169,6 +194,14 @@ class _HomepageState extends State<Homepage>
                                 : Icon(Icons.play_arrow),
                         iconSize: 42,
                       ),
+                      // 計時重置鈕
+                      IconButton(
+                        onPressed: () {
+                          _resetTimer();
+                        },
+                        icon: Icon(Icons.refresh),
+                        iconSize: 42,
+                      )
                     ],
                   ),
                 ),

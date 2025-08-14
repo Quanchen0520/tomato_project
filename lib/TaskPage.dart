@@ -11,6 +11,20 @@ class _TaskpageState extends State<Taskpage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "Task List",
+          style: TextStyle(
+              fontSize: 42,
+              fontWeight: FontWeight.bold
+          ),
+        ),
+        centerTitle: true,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
+      extendBodyBehindAppBar: true,
       body: Container(
         decoration: BoxDecoration(
           // image: DecorationImage(
@@ -27,15 +41,6 @@ class _TaskpageState extends State<Taskpage> {
           child: Center(
             child: Column(
               children: [
-                SizedBox(height: 8),
-                Text(
-                  'Task List',
-                  style: TextStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: 16),
                   child: Card(
