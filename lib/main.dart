@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tomato_project/AppPageController.dart';
 import 'package:tomato_project/BackgroundSettingPage.dart';
-import 'package:tomato_project/HomePage.dart';
 import 'package:tomato_project/LoginPage.dart';
 import 'package:tomato_project/RegisterPage.dart';
-import 'package:tomato_project/SettingPage.dart';
-import 'package:tomato_project/Splash%20Screen.dart';
+import 'package:tomato_project/SplashScreen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +26,6 @@ class MyApp extends StatelessWidget {
         '/login': (context) => Loginpage(),
         '/register': (context) => RegisterPage(),
         '/home': (context) => Apppagecontroller(),
-        '/setting': (context) => SettingPage(),
         '/BackgroundSetting': (context) => Backgroundsettingpage()
       },
     );

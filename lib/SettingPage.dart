@@ -19,7 +19,7 @@ class _SettingPageState extends State<SettingPage> {
         title: Text(
           "Settings",
           style: TextStyle(
-            fontSize: 42,
+            fontSize: 32,
             fontWeight: FontWeight.bold
           ),
         ),
