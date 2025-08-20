@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:tomato_project/AppPageController.dart';
 import 'package:tomato_project/BackgroundSettingPage.dart';
 import 'package:tomato_project/LoginPage.dart';
 import 'package:tomato_project/RegisterPage.dart';
 import 'package:tomato_project/SplashScreen.dart';
+import 'package:tomato_project/provider/task_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => TaskProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

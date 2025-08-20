@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/material.dart';
-import 'package:tomato_project/SettingPage.dart';
-import 'package:tomato_project/TaskPage.dart';
-import 'ClockPainter.dart';
+import 'dart:ui';
 import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:provider/provider.dart';
+import 'package:tomato_project/provider/task_provider.dart';
+import 'ClockPainter.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -20,105 +21,78 @@ class _HomepageState extends State<Homepage>
 
   Timer? _countdownTimer;
 
-  // 宣告變數
   int workDuration = 25;
   int breakDuration = 5;
-  int totalDurationInSeconds = 1500;
   bool isTimerRunning = false;
-  bool isTimerPaused = false;
   bool isMusicPlaying = false;
   bool isWorkMode = true;
-  bool onTask = false;
-  bool showModel = false;
   String nowTask = "Please select a task";
   double _progressRatio = 0.0;
-  double _pausedAngle = -pi / 2; // 暫停時保留指針角度
-  double _pausedProgressRatio = 0.0;
+  double _pausedAngle = -pi / 2;
 
-  // 初始化資源
   @override
   void initState() {
     super.initState();
-    // _animationController = AnimationController(
-    //   vsync: this,
-    //   duration: Duration(seconds: 1), // totalDurationInSeconds
-    // );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<TaskProvider>().loadTasks();
+    });
     _audioPlayer = AudioPlayer();
     _audioPlayer.setReleaseMode(ReleaseMode.loop);
 
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 1500), // 25分鐘
-    )
-      ..addListener(() {
-        setState(() {
-          _progressRatio = _animationController.value;
-          if (!isTimerRunning) {
-            _pausedAngle = -pi / 2 + (_progressRatio * 2 * pi);
-          }
-        });
+      duration: Duration(seconds: workDuration * 60),
+    )..addListener(() {
+      setState(() {
+        _progressRatio = _animationController.value;
+        if (!isTimerRunning) {
+          _pausedAngle = -pi / 2 + (_progressRatio * 2 * pi);
+        }
       });
+    });
   }
 
-  // 釋放資源
   @override
   void dispose() {
     _animationController.dispose();
     _countdownTimer?.cancel();
     _audioPlayer.dispose();
-    // _accelerometerSubscription?.cancel();
     super.dispose();
   }
 
-  // 開始計時
   void _startTimer() {
     setState(() => isTimerRunning = true);
     _animationController.forward();
   }
 
-  // 停止計時
   void _pauseTimer() {
-    if (!isTimerRunning) return;
-    _pausedAngle = -pi / 2 + (_progressRatio * 2 * pi); // 暫停時記錄目前角度
-    _pausedProgressRatio = _progressRatio;
-    _countdownTimer?.cancel(); // 停止倒數
-    _animationController.stop(); // 停止動畫
-    setState(() => isTimerRunning = false); // 切換狀態
+    _pausedAngle = -pi / 2 + (_progressRatio * 2 * pi);
+    _animationController.stop();
+    setState(() => isTimerRunning = false);
   }
 
-  // 重設計時
   void _resetTimer() {
-    _countdownTimer?.cancel();
     _animationController.reset();
-
     setState(() {
       isTimerRunning = false;
-      _animationController.reset();
       _progressRatio = 0.0;
-      _pausedProgressRatio = 0.0;
       _pausedAngle = -pi / 2;
     });
   }
 
-  // 播放音樂
   Future<void> _playMusic() async {
-    await _audioPlayer.play(AssetSource('birds-339196.mp3')); // 播放 assets 音樂
-    print("音樂播放中...");
-    setState(() {
-      isMusicPlaying = true;
-    });
+    await _audioPlayer.play(AssetSource('birds-339196.mp3'));
+    setState(() => isMusicPlaying = true);
   }
 
-  // 停止播放音樂
   Future<void> _stopMusic() async {
-    await _audioPlayer.stop(); // 停止播放
-    setState(() {
-      isMusicPlaying = false;
-    });
+    await _audioPlayer.stop();
+    setState(() => isMusicPlaying = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    final taskProvider = context.watch<TaskProvider>();
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -129,141 +103,259 @@ class _HomepageState extends State<Homepage>
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: Column(
-              children: [
-                SizedBox(height: 12),
-                TextButton(
-                  onPressed: () {
-                    _chooseTaskDialog();
-                  },
-                  child: Text(
-                      nowTask,
-                      style: TextStyle(
-                          color: Colors.white
-                      )
-                  ),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+
+              // 選擇任務按鈕
+              _glassButton(nowTask, () {
+                _chooseTaskDialog();
+              }),
+
+              const SizedBox(height: 8),
+              Text(
+                isWorkMode ? 'Work Time' : 'Rest Time',
+                style: const TextStyle(
+                  fontSize: 42,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                SizedBox(height: 8),
-                // 工作/休息時間顯示
-                Text(
-                  isWorkMode ? 'Work Time' : 'Rest Time',
-                  style: TextStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                // 計時器顯示
-                AnimatedBuilder(
-                  animation: _animationController,
-                  builder: (context, child) {
-                    return CustomPaint(
-                      painter: ClockPainter(
-                        progressRatio: _progressRatio,
-                        workDuration: 25,
-                        breakDuration: 5,
-                        isRunning: isTimerRunning,
-                        pausedNeedleAngle: _pausedAngle,
-                        pausedProgressRatio: _pausedProgressRatio,
-                      ),
-                      size: Size(300, 300),
-                    );
-                  },
-                ),
-                SizedBox(height: 12),
-                Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // 背景音樂播放鈕
-                      IconButton(
-                        onPressed: isMusicPlaying ? _stopMusic : _playMusic,
-                        icon:
-                            isMusicPlaying
-                                ? Icon(Icons.music_note_sharp)
-                                : Icon(Icons.music_off_sharp),
-                        iconSize: 42,
-                      ),
-                      // 計時開始暫停鈕
-                      IconButton(
-                        onPressed: isTimerRunning ? _pauseTimer : _startTimer,
-                        icon:
-                            isTimerRunning
-                                ? Icon(Icons.stop)
-                                : Icon(Icons.play_arrow),
-                        iconSize: 42,
-                      ),
-                      // 計時重置鈕
-                      IconButton(
-                        onPressed: () {
-                          _resetTimer();
-                        },
-                        icon: Icon(Icons.refresh),
-                        iconSize: 42,
-                      )
-                    ],
-                  ),
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 16),
-                  child: Card(
-                    elevation: 8, // 視覺層次
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(32),
+              ),
+
+              // 計時器圓形
+              AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: ClockPainter(
+                      progressRatio: _progressRatio,
+                      workDuration: workDuration,
+                      breakDuration: breakDuration,
+                      isRunning: isTimerRunning,
+                      pausedNeedleAngle: _pausedAngle,
+                      pausedProgressRatio: _progressRatio,
                     ),
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Column(
-                          children: [
-                            Text(
-                              "Task List",
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
+                    size: const Size(300, 300),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _iconButton(
+                    isMusicPlaying ? Icons.music_note : Icons.music_off,
+                    isMusicPlaying ? _stopMusic : _playMusic,
+                  ),
+                  const SizedBox(width: 16),
+                  _iconButton(
+                    isTimerRunning ? Icons.stop : Icons.play_arrow,
+                    isTimerRunning ? _pauseTimer : _startTimer,
+                  ),
+                  const SizedBox(width: 16),
+                  _iconButton(Icons.refresh, _resetTimer),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: _glassCard(
+                    ListView.separated(
+                      itemCount: taskProvider.tasks.length,
+                      separatorBuilder:
+                          (context, index) =>
+                              Divider(color: Colors.white24, height: 1),
+                      itemBuilder: (context, index) {
+                        final task = taskProvider.tasks[index];
+                        return ListTile(
+                          title: Text(
+                            task["taskName"] ?? "",
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          subtitle: Text(
+                            "Work: ${task["workTime"] ?? 0} min | Rest: ${task["restTime"] ?? 0} min",
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _chooseTaskDialog() async {
+    final taskProvider = context.read<TaskProvider>();
+    int? selectedIndex; // 用來記錄目前選中的任務 index
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          // 讓 Dialog 內可以 setState
+          builder: (context, setStateDialog) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          "Select Task",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        if (taskProvider.tasks.isEmpty)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(24.0),
+                              child: Text(
+                                "No tasks yet",
+                                style: TextStyle(color: Colors.white70),
                               ),
                             ),
-                            ListTile(
-                              title: Text("write program"),
-                              subtitle: Text("work 0 minute,\nrest 0 minute"),
-                              trailing: IconButton(
-                                icon: Icon(
-                                  Icons.delete_outline,
-                                  color: Colors.red,
-                                ),
-                                onPressed: () async {
-                                  // await TaskStorage.deleteTask(index);
-                                  // setState(() {
-                                  //   tasks.removeAt(index);
-                                  // });
+                          )
+                        else
+                          Flexible(
+                            child: SizedBox(
+                              height: 400,
+                              child: ListView.separated(
+                                shrinkWrap: true,
+                                itemCount: taskProvider.tasks.length,
+                                separatorBuilder:
+                                    (context, index) =>
+                                        Divider(color: Colors.white24),
+                                itemBuilder: (context, index) {
+                                  final task = taskProvider.tasks[index];
+                                  final isSelected = selectedIndex == index;
+                                  return ListTile(
+                                    tileColor:
+                                        isSelected
+                                            ? Colors.white24.withOpacity(0.3)
+                                            : Colors.transparent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    title: Text(
+                                      task["taskName"] ?? "",
+                                      style: TextStyle(
+                                        color:
+                                            isSelected
+                                                ? Colors.amberAccent
+                                                : Colors.white,
+                                        fontWeight:
+                                            isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      "Work: ${task["workTime"] ?? 0} min | Rest: ${task["restTime"] ?? 0} min",
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      setStateDialog(() {
+                                        selectedIndex = index;
+                                      });
+                                    },
+                                  );
                                 },
                               ),
                             ),
-                            SizedBox(
-                              height: 1,
-                              child: Container(color: Colors.grey),
+                          ),
+
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text(
+                                "Cancel",
+                                style: TextStyle(color: Colors.white70),
+                              ),
                             ),
-                            ListTile(
-                              title: Text("read english"),
-                              subtitle: Text("work 0 minute, rest 0 minute"),
-                              trailing: IconButton(
-                                icon: Icon(
-                                  Icons.delete_outline,
-                                  color: Colors.red,
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.amberAccent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                onPressed: () async {},
+                              ),
+                              onPressed:
+                                  selectedIndex == null
+                                      ? null
+                                      : () {
+                                        final selectedTask =
+                                            taskProvider.tasks[selectedIndex!];
+                                        setState(() {
+                                          nowTask =
+                                              "'${selectedTask["taskName"]}' in progress";
+                                        });
+                                        Navigator.pop(context);
+                                      },
+                              child: const Text(
+                                "select",
+                                style: TextStyle(color: Colors.black),
                               ),
                             ),
                           ],
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
-              ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ====================== 自訂 Widget ======================
+
+  Widget _glassButton(String text, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white24),
+            ),
+            child: Text(
+              text,
+              style: const TextStyle(color: Colors.white, fontSize: 18),
             ),
           ),
         ),
@@ -271,53 +363,45 @@ class _HomepageState extends State<Homepage>
     );
   }
 
-  void _chooseTaskDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Choose Task"),
-          content: SizedBox(
-            height: 250, // 給定固定高度
-            width: double.maxFinite,
-            child: ListView(
-              padding: const EdgeInsets.all(8),
-              children: <Widget>[
-                ListTile(
-                  title: Text("read english"),
-                  subtitle: Text("work 0 minute,\nrest 0 minute"),
-                  onTap: () {
-                    setState(() {
-                      nowTask = "'read english' in progress";
-                    });
-                    Navigator.pop(context); // 關閉 dialog
-                  },
-                ),
-                Divider(),
-                ListTile(
-                  title: Text("write program"),
-                  subtitle: Text("work 0 minute,\nrest 0 minute"),
-                  onTap: () {
-                    setState(() {
-                      nowTask = "'write program' in progress";
-                    });
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            ),
+  Widget _iconButton(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.purple.shade300, Colors.blue.shade200],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-        );
-      },
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 4,
+              offset: Offset(2, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: Colors.white, size: 32),
+      ),
     );
   }
 
-  void _updateTimerMode() {
-    int workTimeInSeconds = workDuration * 60;
-    int elapsedSeconds =
-        ((workDuration + breakDuration) * 60) - totalDurationInSeconds;
-    setState(() {
-      isWorkMode = elapsedSeconds < workTimeInSeconds;
-    });
+  Widget _glassCard(Widget child) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(32),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: child,
+        ),
+      ),
+    );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:tomato_project/utils/task_storage.dart';
+import 'package:provider/provider.dart';
+import 'package:tomato_project/provider/task_provider.dart';
 
 class TaskPage extends StatefulWidget {
   const TaskPage({super.key});
@@ -10,7 +11,6 @@ class TaskPage extends StatefulWidget {
 }
 
 class _TaskPageState extends State<TaskPage> {
-  List<Map<String, dynamic>> tasks = [];
   late TextEditingController taskName;
   late TextEditingController workTime;
   late TextEditingController restTime;
@@ -21,7 +21,6 @@ class _TaskPageState extends State<TaskPage> {
     taskName = TextEditingController();
     workTime = TextEditingController();
     restTime = TextEditingController();
-    _loadTasks();
   }
 
   @override
@@ -32,15 +31,10 @@ class _TaskPageState extends State<TaskPage> {
     super.dispose();
   }
 
-  Future<void> _loadTasks() async {
-    List<Map<String, dynamic>> loadedTasks = await TaskStorage.loadTasks();
-    setState(() {
-      tasks = loadedTasks;
-    });
-  }
-
   Future<void> _addTask() async {
-    if (taskName.text.isEmpty || workTime.text.isEmpty || restTime.text.isEmpty) {
+    if (taskName.text.isEmpty ||
+        workTime.text.isEmpty ||
+        restTime.text.isEmpty) {
       _showError("Please enter complete information!");
       return;
     }
@@ -53,16 +47,15 @@ class _TaskPageState extends State<TaskPage> {
       return;
     }
 
-    await TaskStorage.saveTask(taskName.text, _workTime, _restTime);
+    context.read<TaskProvider>().addTask(taskName.text, _workTime, _restTime);
+
     taskName.clear();
     workTime.clear();
     restTime.clear();
-    _loadTasks();
   }
 
   Future<void> _deleteTask(String id) async {
-    await TaskStorage.deleteTask(id);
-    _loadTasks();
+    context.read<TaskProvider>().deleteTask(id);
   }
 
   void _showError(String message) {
@@ -76,6 +69,8 @@ class _TaskPageState extends State<TaskPage> {
 
   @override
   Widget build(BuildContext context) {
+    final taskProvider = context.watch<TaskProvider>();
+    final tasks = taskProvider.tasks;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -97,22 +92,23 @@ class _TaskPageState extends State<TaskPage> {
           ),
         ),
         child: SafeArea(
-          child: tasks.isEmpty
-              ? Center(
-            child: Text(
-              "No tasks yet.\nClick '+' to add a task",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white, fontSize: 20),
-            ),
-          )
-              : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: tasks.length,
-            itemBuilder: (context, index) {
-              final task = tasks[index];
-              return _buildGlassTaskCard(task);
-            },
-          ),
+          child:
+              tasks.isEmpty
+                  ? Center(
+                    child: Text(
+                      "No tasks yet.\nClick '+' to add a task",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white, fontSize: 20),
+                    ),
+                  )
+                  : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: tasks.length,
+                    itemBuilder: (context, index) {
+                      final task = tasks[index];
+                      return _buildGlassTaskCard(task);
+                    },
+                  ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -139,7 +135,10 @@ class _TaskPageState extends State<TaskPage> {
             child: ListTile(
               title: Text(
                 task["taskName"] ?? "",
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               subtitle: Text(
                 "Work ${task["workTime"]} min, Rest ${task["restTime"]} min",
@@ -147,7 +146,8 @@ class _TaskPageState extends State<TaskPage> {
               ),
               trailing: IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                onPressed: () => _deleteTaskDialog(task["id"], task["taskName"]),
+                onPressed:
+                    () => _deleteTaskDialog(task["id"], task["taskName"]),
               ),
               onTap: () {
                 _editTaskDialog(task);
@@ -162,157 +162,160 @@ class _TaskPageState extends State<TaskPage> {
   void _addTaskDialog() {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent, // 透明底
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.2)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Add Task",
-                    style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
+      builder:
+          (context) => Dialog(
+            backgroundColor: Colors.transparent, // 透明底
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
                   ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: taskName,
-                    decoration: InputDecoration(
-                      labelText: 'Task Name',
-                      labelStyle: const TextStyle(color: Colors.white70),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                          const BorderSide(color: Colors.white30)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                          const BorderSide(color: Colors.white70)),
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: workTime,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Work Time',
-                      labelStyle: const TextStyle(color: Colors.white70),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                          const BorderSide(color: Colors.white30)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                          const BorderSide(color: Colors.white70)),
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: restTime,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Rest Time',
-                      labelStyle: const TextStyle(color: Colors.white70),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                          const BorderSide(color: Colors.white30)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                          const BorderSide(color: Colors.white70)),
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      _dialogButton("Cancel", Colors.grey, () {
-                        Navigator.pop(context);
-                      }),
-                      const SizedBox(width: 8),
-                      _dialogButton("Add", Colors.purple.shade300, () {
-                        Navigator.pop(context);
-                        _addTask();
-                      }),
+                      const Text(
+                        "Add Task",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: taskName,
+                        decoration: InputDecoration(
+                          labelText: 'Task Name',
+                          labelStyle: const TextStyle(color: Colors.white70),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.white30),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.white70),
+                          ),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: workTime,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Work Time',
+                          labelStyle: const TextStyle(color: Colors.white70),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.white30),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.white70),
+                          ),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: restTime,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Rest Time',
+                          labelStyle: const TextStyle(color: Colors.white70),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.white30),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.white70),
+                          ),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          _dialogButton("Cancel", Colors.grey, () {
+                            Navigator.pop(context);
+                          }),
+                          const SizedBox(width: 8),
+                          _dialogButton("Add", Colors.purple.shade300, () {
+                            Navigator.pop(context);
+                            _addTask();
+                          }),
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
     );
   }
 
   void _deleteTaskDialog(String id, String taskName) {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.2)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Are you sure you want to delete task '$taskName' ?",
-                    style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                    textAlign: TextAlign.center,
+      builder:
+          (context) => Dialog(
+            backgroundColor: Colors.transparent,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      _dialogButton("Cancel", Colors.grey, () {
-                        Navigator.pop(context);
-                      }),
-                      const SizedBox(width: 8),
-                      _dialogButton("Delete", Colors.redAccent, () async {
-                        Navigator.pop(context);
-                        await _deleteTask(id);
-                      }),
+                      Text(
+                        "Are you sure you want to delete task '$taskName' ?",
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          _dialogButton("Cancel", Colors.grey, () {
+                            Navigator.pop(context);
+                          }),
+                          const SizedBox(width: 8),
+                          _dialogButton("Delete", Colors.redAccent, () async {
+                            Navigator.pop(context);
+                            await _deleteTask(id);
+                          }),
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
     );
   }
 
   void _editTaskDialog(Map<String, dynamic> task) {
-    // 把原本的值先塞入 controller
     taskName.text = task["taskName"];
     workTime.text = task["workTime"].toString();
     restTime.text = task["restTime"].toString();
@@ -335,83 +338,32 @@ class _TaskPageState extends State<TaskPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    "Edit Task",
-                    style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
+                  const Text("Edit Task",
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
                   const SizedBox(height: 12),
-                  // TextField 與 _addTaskDialog 類似
-                  TextField(
-                    controller: taskName,
-                    decoration: InputDecoration(
-                      labelText: 'Task Name',
-                      labelStyle: const TextStyle(color: Colors.white70),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.white30)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.white70)),
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: workTime,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Work Time',
-                      labelStyle: const TextStyle(color: Colors.white70),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.white30)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.white70)),
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: restTime,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Rest Time',
-                      labelStyle: const TextStyle(color: Colors.white70),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.white30)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.white70)),
-                    ),
-                    style: const TextStyle(color: Colors.white),
-                  ),
+                  TextField(controller: taskName, style: const TextStyle(color: Colors.white)),
+                  TextField(controller: workTime, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white)),
+                  TextField(controller: restTime, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white)),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      _dialogButton("Cancel", Colors.grey, () {
-                        Navigator.pop(context);
-                      }),
+                      _dialogButton("Cancel", Colors.grey, () => Navigator.pop(context)),
                       const SizedBox(width: 8),
-                      _dialogButton("Save", Colors.purple.shade300, () async {
-                        Navigator.pop(context);
+                      _dialogButton("Save", Colors.purple.shade300, () {
                         final _workTime = int.tryParse(workTime.text);
                         final _restTime = int.tryParse(restTime.text);
-                        if (taskName.text.isEmpty ||
-                            _workTime == null ||
-                            _restTime == null) {
+                        if (taskName.text.isEmpty || _workTime == null || _restTime == null) {
                           _showError("Please enter valid info!");
                           return;
                         }
-                        // 更新 TaskStorage
-                        await TaskStorage.updateTask(
-                            task["id"], taskName.text, _workTime, _restTime);
-                        _loadTasks();
+                        context.read<TaskProvider>().updateTask(
+                          task["id"],
+                          taskName.text,
+                          _workTime,
+                          _restTime,
+                        );
+                        Navigator.pop(context);
                         taskName.clear();
                         workTime.clear();
                         restTime.clear();
@@ -443,7 +395,10 @@ class _TaskPageState extends State<TaskPage> {
         ),
         child: Text(
           text,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );

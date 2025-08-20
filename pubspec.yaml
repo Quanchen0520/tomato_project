@@ -14,6 +14,7 @@ dependencies:
   flutter_native_splash: ^2.4.6 # 動畫套件
   audioplayers: ^5.2.1 # 音樂播放套件
   flutter_local_notifications: ^17.2.1 # 通知套件
+  provider: ^6.0.5
 
 dev_dependencies:
   flutter_test:
