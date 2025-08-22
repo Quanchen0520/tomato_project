@@ -30,6 +30,7 @@ class _HomepageState extends State<Homepage>
   double _progressRatio = 0.0;
   double _pausedAngle = -pi / 2;
 
+  // 初始化狀態
   @override
   void initState() {
     super.initState();
@@ -52,6 +53,7 @@ class _HomepageState extends State<Homepage>
     });
   }
 
+  // 釋放資源
   @override
   void dispose() {
     _animationController.dispose();
@@ -60,17 +62,20 @@ class _HomepageState extends State<Homepage>
     super.dispose();
   }
 
+  // 開始計時器
   void _startTimer() {
     setState(() => isTimerRunning = true);
     _animationController.forward();
   }
 
+  // 暫停計時器
   void _pauseTimer() {
     _pausedAngle = -pi / 2 + (_progressRatio * 2 * pi);
     _animationController.stop();
     setState(() => isTimerRunning = false);
   }
 
+  // 重置計時器
   void _resetTimer() {
     _animationController.reset();
     setState(() {
@@ -80,11 +85,13 @@ class _HomepageState extends State<Homepage>
     });
   }
 
+  // 播放音樂
   Future<void> _playMusic() async {
     await _audioPlayer.play(AssetSource('birds-339196.mp3'));
     setState(() => isMusicPlaying = true);
   }
 
+  // 停止音樂
   Future<void> _stopMusic() async {
     await _audioPlayer.stop();
     setState(() => isMusicPlaying = false);
@@ -93,6 +100,15 @@ class _HomepageState extends State<Homepage>
   @override
   Widget build(BuildContext context) {
     final taskProvider = context.watch<TaskProvider>();
+    if (nowTask != "Please select a task") {
+      final exists = taskProvider.tasks.any((task) =>
+          nowTask.contains(task["taskName"] ?? ""));
+      if (!exists) {
+        setState(() {
+          nowTask = "Please select a task";
+        });
+      }
+    }
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -106,12 +122,10 @@ class _HomepageState extends State<Homepage>
           child: Column(
             children: [
               const SizedBox(height: 12),
-
               // 選擇任務按鈕
               _glassButton(nowTask, () {
                 _chooseTaskDialog();
               }),
-
               const SizedBox(height: 8),
               Text(
                 isWorkMode ? 'Work Time' : 'Rest Time',
@@ -121,7 +135,6 @@ class _HomepageState extends State<Homepage>
                   color: Colors.white,
                 ),
               ),
-
               // 計時器圓形
               AnimatedBuilder(
                 animation: _animationController,
@@ -140,6 +153,7 @@ class _HomepageState extends State<Homepage>
                 },
               ),
               const SizedBox(height: 8),
+              // 音樂和計時器控制按鈕
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -157,28 +171,52 @@ class _HomepageState extends State<Homepage>
                 ],
               ),
               const SizedBox(height: 16),
+              // 任務清單
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: _glassCard(
-                    ListView.separated(
-                      itemCount: taskProvider.tasks.length,
-                      separatorBuilder:
-                          (context, index) =>
-                              Divider(color: Colors.white24, height: 1),
-                      itemBuilder: (context, index) {
-                        final task = taskProvider.tasks[index];
-                        return ListTile(
-                          title: Text(
-                            task["taskName"] ?? "",
-                            style: const TextStyle(color: Colors.white),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 16.0,
+                              horizontal: 8.0,
+                            ),
+                            child: Text(
+                              "Task List",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                          subtitle: Text(
-                            "Work: ${task["workTime"] ?? 0} min | Rest: ${task["restTime"] ?? 0} min",
-                            style: TextStyle(color: Colors.white70),
+                        ),
+                        Expanded(
+                          child: ListView.separated(
+                            itemCount: taskProvider.tasks.length,
+                            separatorBuilder:
+                                (context, index) =>
+                                    Divider(color: Colors.white24, height: 1),
+                            itemBuilder: (context, index) {
+                              final task = taskProvider.tasks[index];
+                              return ListTile(
+                                title: Text(
+                                  task["taskName"] ?? "",
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                                subtitle: Text(
+                                  "Work: ${task["workTime"] ?? 0} min | Rest: ${task["restTime"] ?? 0} min",
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
                   ),
                 ),
