@@ -45,5 +45,10 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<key>NSPhotoLibraryUsageDescription</key>
+    <string>需要存取相簿以選擇圖片作為背景</string>
+    <key>NSCameraUsageDescription</key>
+    <string>需要存取相機以拍攝圖片作為背景</string>
 </dict>
 </plist>

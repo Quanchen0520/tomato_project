@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:provider/provider.dart';
+import 'package:tomato_project/provider/background_provider.dart';
 import 'package:tomato_project/provider/task_provider.dart';
 import 'ClockPainter.dart';
 
@@ -109,13 +110,28 @@ class _HomepageState extends State<Homepage>
         });
       }
     }
+    final bg = Provider.of<BackgroundProvider>(context);
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: bg.backgroundImage != null
+            ? BoxDecoration(
+          image: DecorationImage(
+            image: FileImage(bg.backgroundImage!),
+            fit: BoxFit.cover,
+          ),
+        )
+            : bg.backgroundAssetImage != null
+            ? BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(bg.backgroundAssetImage!),
+            fit: BoxFit.cover,
+          ),
+        )
+            : BoxDecoration(
           gradient: LinearGradient(
+            colors: [bg.backgroundColor, Colors.blue.shade300],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.purple.shade400, Colors.blue.shade300],
           ),
         ),
         child: SafeArea(
@@ -402,13 +418,14 @@ class _HomepageState extends State<Homepage>
   }
 
   Widget _iconButton(IconData icon, VoidCallback onTap) {
+    final bg = Provider.of<BackgroundProvider>(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.purple.shade300, Colors.blue.shade200],
+            colors: [bg.backgroundColor, Colors.blue.shade300],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),

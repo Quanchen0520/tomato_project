@@ -15,6 +15,8 @@ dependencies:
   audioplayers: ^5.2.1 # 音樂播放套件
   flutter_local_notifications: ^17.2.1 # 通知套件
   provider: ^6.0.5
+  flutter_colorpicker: ^1.0.3 # 顏色選擇器套件
+  image_picker: ^0.8.7+5 # 圖片選擇器套件
 
 dev_dependencies:
   flutter_test:

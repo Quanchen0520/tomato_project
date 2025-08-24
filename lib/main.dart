@@ -6,6 +6,7 @@ import 'package:tomato_project/BackgroundSettingPage.dart';
 import 'package:tomato_project/LoginPage.dart';
 import 'package:tomato_project/RegisterPage.dart';
 import 'package:tomato_project/SplashScreen.dart';
+import 'package:tomato_project/provider/background_provider.dart';
 import 'package:tomato_project/provider/task_provider.dart';
 
 void main() {
@@ -14,8 +15,10 @@ void main() {
 
   runApp(
     MultiProvider(
+      // 註冊 providers
       providers: [
         ChangeNotifierProvider(create: (_) => TaskProvider()),
+        ChangeNotifierProvider(create: (_) => BackgroundProvider()),
       ],
       child: const MyApp(),
     ),
@@ -35,7 +38,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => Loginpage(),
         '/register': (context) => RegisterPage(),
         '/home': (context) => Apppagecontroller(),
-        '/BackgroundSetting': (context) => Backgroundsettingpage()
+        '/BackgroundSetting': (context) => Backgroundsettingpage(),
       },
     );
   }

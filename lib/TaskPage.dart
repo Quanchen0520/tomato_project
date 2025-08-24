@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tomato_project/provider/background_provider.dart';
 import 'package:tomato_project/provider/task_provider.dart';
 
 class TaskPage extends StatefulWidget {
@@ -71,6 +72,7 @@ class _TaskPageState extends State<TaskPage> {
   Widget build(BuildContext context) {
     final taskProvider = context.watch<TaskProvider>();
     final tasks = taskProvider.tasks;
+    final bg = Provider.of<BackgroundProvider>(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -84,9 +86,23 @@ class _TaskPageState extends State<TaskPage> {
       ),
       extendBodyBehindAppBar: true,
       body: Container(
-        decoration: BoxDecoration(
+        decoration: bg.backgroundImage != null
+            ? BoxDecoration(
+          image: DecorationImage(
+            image: FileImage(bg.backgroundImage!),
+            fit: BoxFit.cover,
+          ),
+        )
+            : bg.backgroundAssetImage != null
+            ? BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(bg.backgroundAssetImage!),
+            fit: BoxFit.cover,
+          ),
+        )
+            : BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.purple.shade400, Colors.blue.shade300],
+            colors: [bg.backgroundColor, Colors.blue.shade300],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -322,60 +338,84 @@ class _TaskPageState extends State<TaskPage> {
 
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.2)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text("Edit Task",
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                  const SizedBox(height: 12),
-                  TextField(controller: taskName, style: const TextStyle(color: Colors.white)),
-                  TextField(controller: workTime, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white)),
-                  TextField(controller: restTime, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white)),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+      builder:
+          (context) => Dialog(
+            backgroundColor: Colors.transparent,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white.withOpacity(0.2)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      _dialogButton("Cancel", Colors.grey, () => Navigator.pop(context)),
-                      const SizedBox(width: 8),
-                      _dialogButton("Save", Colors.purple.shade300, () {
-                        final _workTime = int.tryParse(workTime.text);
-                        final _restTime = int.tryParse(restTime.text);
-                        if (taskName.text.isEmpty || _workTime == null || _restTime == null) {
-                          _showError("Please enter valid info!");
-                          return;
-                        }
-                        context.read<TaskProvider>().updateTask(
-                          task["id"],
-                          taskName.text,
-                          _workTime,
-                          _restTime,
-                        );
-                        Navigator.pop(context);
-                        taskName.clear();
-                        workTime.clear();
-                        restTime.clear();
-                      }),
+                      const Text(
+                        "Edit Task",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: taskName,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      TextField(
+                        controller: workTime,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      TextField(
+                        controller: restTime,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          _dialogButton(
+                            "Cancel",
+                            Colors.grey,
+                            () => Navigator.pop(context),
+                          ),
+                          const SizedBox(width: 8),
+                          _dialogButton("Save", Colors.purple.shade300, () {
+                            final _workTime = int.tryParse(workTime.text);
+                            final _restTime = int.tryParse(restTime.text);
+                            if (taskName.text.isEmpty ||
+                                _workTime == null ||
+                                _restTime == null) {
+                              _showError("Please enter valid info!");
+                              return;
+                            }
+                            context.read<TaskProvider>().updateTask(
+                              task["id"],
+                              taskName.text,
+                              _workTime,
+                              _restTime,
+                            );
+                            Navigator.pop(context);
+                            taskName.clear();
+                            workTime.clear();
+                            restTime.clear();
+                          }),
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
     );
   }
 

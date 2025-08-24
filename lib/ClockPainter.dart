@@ -55,24 +55,45 @@ class ClockPainter extends CustomPainter {
     final Paint workPaint = Paint()
       ..color = Colors.blue.withOpacity(0.1)
       ..style = PaintingStyle.fill;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius - 1),
-      -pi / 2,
-      workAngle,
-      true,
-      workPaint,
-    );
+    // canvas.drawArc(
+    //   Rect.fromCircle(center: center, radius: radius - 1),
+    //   -pi / 2,
+    //   workAngle,
+    //   true,
+    //   workPaint,
+    // );
 
     final Paint breakPaint = Paint()
       ..color = Colors.red.withOpacity(0.1)
       ..style = PaintingStyle.fill;
+    // canvas.drawArc(
+    //   Rect.fromCircle(center: center, radius: radius - 1),
+    //   -pi / 2 + workAngle,
+    //   breakAngle,
+    //   true,
+    //   breakPaint,
+    // );
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius - 1),
+      -pi / 2,
+      workAngle,
+      false, // ⬅ false 表示只畫弧線，不連中心
+      workPaint
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 30, // 環的厚度
+    );
+
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius - 1),
       -pi / 2 + workAngle,
       breakAngle,
-      true,
-      breakPaint,
+      false,
+      breakPaint
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 20,
     );
+
   }
 
   /// 畫刻度線
