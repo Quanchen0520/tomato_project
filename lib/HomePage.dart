@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:provider/provider.dart';
 import 'package:tomato_project/provider/background_provider.dart';
+import 'package:tomato_project/provider/mode_Provider.dart';
 import 'package:tomato_project/provider/task_provider.dart';
 import 'ClockPainter.dart';
 
@@ -19,6 +20,7 @@ class _HomepageState extends State<Homepage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late AudioPlayer _audioPlayer;
+  late DateTime _now;
 
   Timer? _countdownTimer;
 
@@ -38,6 +40,14 @@ class _HomepageState extends State<Homepage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<TaskProvider>().loadTasks();
     });
+
+    _now = DateTime.now();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() {
+        _now = DateTime.now();
+      });
+    });
+
     _audioPlayer = AudioPlayer();
     _audioPlayer.setReleaseMode(ReleaseMode.loop);
 
@@ -101,9 +111,11 @@ class _HomepageState extends State<Homepage>
   @override
   Widget build(BuildContext context) {
     final taskProvider = context.watch<TaskProvider>();
+    final modeProvider = context.watch<ModeProvider>();
     if (nowTask != "Please select a task") {
-      final exists = taskProvider.tasks.any((task) =>
-          nowTask.contains(task["taskName"] ?? ""));
+      final exists = taskProvider.tasks.any(
+        (task) => nowTask.contains(task["taskName"] ?? ""),
+      );
       if (!exists) {
         setState(() {
           nowTask = "Please select a task";
@@ -113,27 +125,28 @@ class _HomepageState extends State<Homepage>
     final bg = Provider.of<BackgroundProvider>(context);
     return Scaffold(
       body: Container(
-        decoration: bg.backgroundImage != null
-            ? BoxDecoration(
-          image: DecorationImage(
-            image: FileImage(bg.backgroundImage!),
-            fit: BoxFit.cover,
-          ),
-        )
-            : bg.backgroundAssetImage != null
-            ? BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(bg.backgroundAssetImage!),
-            fit: BoxFit.cover,
-          ),
-        )
-            : BoxDecoration(
-          gradient: LinearGradient(
-            colors: [bg.backgroundColor, Colors.blue.shade300],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+        decoration:
+            bg.backgroundImage != null
+                ? BoxDecoration(
+                  image: DecorationImage(
+                    image: FileImage(bg.backgroundImage!),
+                    fit: BoxFit.cover,
+                  ),
+                )
+                : bg.backgroundAssetImage != null
+                ? BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(bg.backgroundAssetImage!),
+                    fit: BoxFit.cover,
+                  ),
+                )
+                : BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [bg.backgroundColor, Colors.blue.shade300],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
         child: SafeArea(
           child: Column(
             children: [
@@ -151,22 +164,15 @@ class _HomepageState extends State<Homepage>
                   color: Colors.white,
                 ),
               ),
-              // 計時器圓形
-              AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  return CustomPaint(
-                    painter: ClockPainter(
-                      progressRatio: _progressRatio,
-                      workDuration: workDuration,
-                      breakDuration: breakDuration,
-                      isRunning: isTimerRunning,
-                      pausedNeedleAngle: _pausedAngle,
-                      pausedProgressRatio: _progressRatio,
-                    ),
-                    size: const Size(300, 300),
-                  );
-                },
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 300,
+                child: Center(
+                  child:
+                      modeProvider.isDigitalMode
+                          ? _buildDigitalClock()
+                          : _buildAnalogClock(),
+                ),
               ),
               const SizedBox(height: 8),
               // 音樂和計時器控制按鈕
@@ -457,6 +463,48 @@ class _HomepageState extends State<Homepage>
           child: child,
         ),
       ),
+    );
+  }
+
+  Widget _buildDigitalClock() {
+    int totalSeconds = isWorkMode ? workDuration * 60 : breakDuration * 60;
+    int elapsedSeconds = (_animationController.value * totalSeconds).round();
+    int remainingSeconds = totalSeconds - elapsedSeconds;
+    if (remainingSeconds < 0) remainingSeconds = 0;
+
+    final minutes = (remainingSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (remainingSeconds % 60).toString().padLeft(2, '0');
+
+    return Text(
+      "$minutes:$seconds",
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 64,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 2,
+        shadows: [
+          Shadow(color: Colors.black54, blurRadius: 8, offset: Offset(2, 2)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalogClock() {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return CustomPaint(
+          painter: ClockPainter(
+            progressRatio: _progressRatio,
+            workDuration: workDuration,
+            breakDuration: breakDuration,
+            isRunning: isTimerRunning,
+            pausedNeedleAngle: _pausedAngle,
+            pausedProgressRatio: _progressRatio,
+          ),
+          size: const Size(300, 300),
+        );
+      },
     );
   }
 }

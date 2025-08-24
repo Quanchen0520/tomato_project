@@ -7,6 +7,7 @@ import 'package:tomato_project/LoginPage.dart';
 import 'package:tomato_project/RegisterPage.dart';
 import 'package:tomato_project/SplashScreen.dart';
 import 'package:tomato_project/provider/background_provider.dart';
+import 'package:tomato_project/provider/mode_Provider.dart';
 import 'package:tomato_project/provider/task_provider.dart';
 
 void main() {
@@ -19,6 +20,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => TaskProvider()),
         ChangeNotifierProvider(create: (_) => BackgroundProvider()),
+        ChangeNotifierProvider(create: (_) => ModeProvider()),
       ],
       child: const MyApp(),
     ),

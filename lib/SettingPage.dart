@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
 import 'package:tomato_project/provider/background_provider.dart';
+import 'package:tomato_project/provider/mode_Provider.dart';
 
 class SettingPage extends StatefulWidget {
   const SettingPage({super.key});
@@ -14,11 +15,12 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
-  bool _isDigitalMode = false;
   bool notification = false;
 
   @override
   Widget build(BuildContext context) {
+    final modeProvider = context.watch<ModeProvider>();
+    final bool _isDigitalMode = modeProvider.isDigitalMode;
     try {
       final bg = context.watch<BackgroundProvider>();
       return Scaffold(
@@ -112,7 +114,8 @@ class _SettingPageState extends State<SettingPage> {
                       trailing: Switch(
                         value: _isDigitalMode,
                         onChanged: (value) {
-                          _isDigitalMode = value;                        },
+                          modeProvider.setMode(value);
+                        }
                       ),
                     ),
                   ],
