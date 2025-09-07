@@ -13,10 +13,12 @@ dependencies:
   cupertino_icons: ^1.0.8  # icon 套件
   flutter_native_splash: ^2.4.6 # 動畫套件
   audioplayers: ^5.2.1 # 音樂播放套件
-  flutter_local_notifications: ^17.2.1 # 通知套件
   provider: ^6.0.5
   flutter_colorpicker: ^1.0.3 # 顏色選擇器套件
   image_picker: ^0.8.7+5 # 圖片選擇器套件
+  flutter_local_notifications: ^17.2.1 # 通知套件
+  permission_handler: ^11.3.1 # 權限套件
+  timezone: ^0.9.4 # 時區套件
 
 dev_dependencies:
   flutter_test:
@@ -31,5 +33,7 @@ flutter:
     - assets/IMG_0067.jpg
     - assets/birds-339196.mp3
     - assets/space.jpg
+    - assets/seasdie.jpg
+    - assets/polar.jpg
 
   uses-material-design: true

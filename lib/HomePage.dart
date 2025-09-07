@@ -7,7 +7,12 @@ import 'package:provider/provider.dart';
 import 'package:tomato_project/provider/background_provider.dart';
 import 'package:tomato_project/provider/mode_Provider.dart';
 import 'package:tomato_project/provider/task_provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'ClockPainter.dart';
+import 'main.dart';
+import 'package:timezone/timezone.dart' as tz;
+
+import 'notification_service.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -20,12 +25,15 @@ class _HomepageState extends State<Homepage>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late AudioPlayer _audioPlayer;
-  late DateTime _now;
 
   Timer? _countdownTimer;
 
-  int workDuration = 25;
-  int breakDuration = 5;
+  bool isRunning = false; // 計時是否正在進行
+  Timer? timer; // 用來控制倒數
+  int remainingSeconds = 0; // 剩餘秒數
+
+  int workDuration = 1;
+  int breakDuration = 1;
   bool isTimerRunning = false;
   bool isMusicPlaying = false;
   bool isWorkMode = true;
@@ -41,27 +49,41 @@ class _HomepageState extends State<Homepage>
       context.read<TaskProvider>().loadTasks();
     });
 
-    _now = DateTime.now();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() {
-        _now = DateTime.now();
-      });
-    });
-
     _audioPlayer = AudioPlayer();
     _audioPlayer.setReleaseMode(ReleaseMode.loop);
 
-    _animationController = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: workDuration * 60),
-    )..addListener(() {
-      setState(() {
-        _progressRatio = _animationController.value;
-        if (!isTimerRunning) {
-          _pausedAngle = -pi / 2 + (_progressRatio * 2 * pi);
-        }
-      });
-    });
+    _animationController =
+        AnimationController(
+            vsync: this,
+            duration: Duration(seconds: workDuration * 60),
+          )
+          ..addListener(() {
+            setState(() {
+              _progressRatio = _animationController.value;
+              if (!isTimerRunning) {
+                _pausedAngle = -pi / 2 + (_progressRatio * 2 * pi);
+              }
+            });
+          })
+          ..addStatusListener((status) {
+            if (status == AnimationStatus.completed) {
+              setState(() {
+                if (isWorkMode) {
+                  // ✅ 工作完成 → 進入休息
+                  isWorkMode = false;
+                  _animationController.duration = Duration(
+                    seconds: breakDuration * 60,
+                  );
+                  _animationController.reset();
+                  _animationController.forward();
+                } else {
+                  // ✅ 休息完成 → 回到工作
+                  isWorkMode = true;
+                  _resetTimer();
+                }
+              });
+            }
+          });
   }
 
   // 釋放資源
@@ -74,26 +96,66 @@ class _HomepageState extends State<Homepage>
   }
 
   // 開始計時器
-  void _startTimer() {
-    setState(() => isTimerRunning = true);
-    _animationController.forward();
+  Future<void> _startTimer() async {
+    _animationController.forward(from: _animationController.value);
+    setState(() {
+      isRunning = true;
+      isTimerRunning = true; // ← 修正控制按鈕的狀態
+    });
+
+    final totalSeconds = (isWorkMode ? workDuration : breakDuration) * 60;
+    remainingSeconds = totalSeconds;
+
+    timer = Timer.periodic(const Duration(seconds: 1), (Timer t) async {
+      if (remainingSeconds > 0) {
+        setState(() {
+          remainingSeconds--;
+        });
+      } else {
+        t.cancel();
+        setState(() {
+          isRunning = false;
+          isTimerRunning = false;
+        });
+      }
+    });
+
+    // 🔔 依據模式自動排程通知
+    await NotificationService.scheduleNotification(
+      id: 1,
+      title: isWorkMode ? "工作結束" : "休息結束",
+      body: isWorkMode ? "該休息囉！" : "該開始工作囉！",
+      delay: Duration(seconds: totalSeconds),
+    );
   }
 
   // 暫停計時器
   void _pauseTimer() {
     _pausedAngle = -pi / 2 + (_progressRatio * 2 * pi);
     _animationController.stop();
+
+    // 計算剩餘秒數
+    final totalSeconds = (isWorkMode ? workDuration : breakDuration) * 60;
+    final passedSeconds = (totalSeconds * _progressRatio).round();
+    remainingSeconds = totalSeconds - passedSeconds;
+
     setState(() => isTimerRunning = false);
+
+    // 取消原本的通知
+    flutterLocalNotificationsPlugin.cancelAll();
   }
 
   // 重置計時器
   void _resetTimer() {
-    _animationController.reset();
     setState(() {
+      isWorkMode = true;
       isTimerRunning = false;
       _progressRatio = 0.0;
       _pausedAngle = -pi / 2;
     });
+
+    _animationController.reset(); // 重置動畫控制器
+    flutterLocalNotificationsPlugin.cancelAll(); // 取消所有排程的通知
   }
 
   // 播放音樂
@@ -162,6 +224,14 @@ class _HomepageState extends State<Homepage>
                   fontSize: 42,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
+                  letterSpacing: 2,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black54,
+                      blurRadius: 8,
+                      offset: Offset(2, 2),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
@@ -254,7 +324,6 @@ class _HomepageState extends State<Homepage>
   void _chooseTaskDialog() async {
     final taskProvider = context.read<TaskProvider>();
     int? selectedIndex; // 用來記錄目前選中的任務 index
-
     showDialog(
       context: context,
       builder: (context) {
@@ -346,7 +415,6 @@ class _HomepageState extends State<Homepage>
                               ),
                             ),
                           ),
-
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
@@ -375,7 +443,25 @@ class _HomepageState extends State<Homepage>
                                         setState(() {
                                           nowTask =
                                               "'${selectedTask["taskName"]}' in progress";
+
+                                          // 更新任務時間
+                                          workDuration =
+                                              selectedTask["workTime"];
+                                          breakDuration =
+                                              selectedTask["restTime"];
+
+                                          isWorkMode = true; // 回到預設（工作模式，藍色）
+
+                                          // 重新套用動畫時間（用秒）
+                                          _animationController
+                                              .duration = Duration(
+                                            seconds: workDuration * 60,
+                                          );
+
+                                          // 重置計時器（回到 0，藍色）
+                                          _animationController.reset();
                                         });
+
                                         Navigator.pop(context);
                                       },
                               child: const Text(
@@ -397,7 +483,64 @@ class _HomepageState extends State<Homepage>
     );
   }
 
-  // ====================== 自訂 Widget ======================
+  // Future<void> _showNotification() async {
+  //   // Android 平台的通知詳細設定
+  //   const AndroidNotificationDetails androidPlatformChannelSpecifics =
+  //       AndroidNotificationDetails(
+  //         'your_channel_id', // 通知頻道 ID
+  //         'your_channel_name', // 通知頻道名稱
+  //         channelDescription: '這是一個測試通知頻道',
+  //         importance: Importance.max,
+  //         priority: Priority.high,
+  //         showWhen: true,
+  //       );
+  //
+  //   // iOS 通知細節
+  //   const DarwinNotificationDetails iOSPlatformChannelSpecifics =
+  //       DarwinNotificationDetails(
+  //         presentAlert: true, // 確保應用程式在前台時顯示警報
+  //         presentBadge: true, // 確保當應用程式處於前台時徽章會更新
+  //         presentSound: true, // 確保應用程式在前台時播放聲音
+  //       );
+  //
+  //   // 組合各平台的通知詳細設定
+  //   const NotificationDetails platformChannelSpecifics = NotificationDetails(
+  //     android: androidPlatformChannelSpecifics,
+  //     iOS: iOSPlatformChannelSpecifics,
+  //   );
+  //
+  //   // 顯示通知
+  //   await flutterLocalNotificationsPlugin.show(
+  //     0, // ID
+  //     'Notifications', // Title
+  //     'Notifications!!!', // Message
+  //     platformChannelSpecifics,
+  //     payload: 'test_payload',
+  //   );
+  // }
+
+  // Future<void> scheduleNotification(
+  //     {required int seconds, required String title, required String body}) async {
+  //   await flutterLocalNotificationsPlugin.zonedSchedule(
+  //     0,
+  //     title,
+  //     body,
+  //     tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds)),
+  //     NotificationDetails(
+  //       android: AndroidNotificationDetails(
+  //         'channel_id',
+  //         'channel_name',
+  //         importance: Importance.high,
+  //         priority: Priority.high,
+  //       ),
+  //       iOS: DarwinNotificationDetails(),
+  //     ),
+  //     androidAllowWhileIdle: true,
+  //     uiLocalNotificationDateInterpretation:
+  //     UILocalNotificationDateInterpretation.absoluteTime,
+  //     matchDateTimeComponents: DateTimeComponents.time,
+  //   );
+  // }
 
   Widget _glassButton(String text, VoidCallback onTap) {
     return GestureDetector(
@@ -501,6 +644,7 @@ class _HomepageState extends State<Homepage>
             isRunning: isTimerRunning,
             pausedNeedleAngle: _pausedAngle,
             pausedProgressRatio: _progressRatio,
+            isWorkMode: isWorkMode,
           ),
           size: const Size(300, 300),
         );
