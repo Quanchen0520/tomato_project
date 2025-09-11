@@ -86,27 +86,7 @@ class _TaskPageState extends State<TaskPage> {
       ),
       extendBodyBehindAppBar: true,
       body: Container(
-        decoration: bg.backgroundImage != null
-            ? BoxDecoration(
-          image: DecorationImage(
-            image: FileImage(bg.backgroundImage!),
-            fit: BoxFit.cover,
-          ),
-        )
-            : bg.backgroundAssetImage != null
-            ? BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(bg.backgroundAssetImage!),
-            fit: BoxFit.cover,
-          ),
-        )
-            : BoxDecoration(
-          gradient: LinearGradient(
-            colors: [bg.backgroundColor, Colors.blue.shade300],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+        decoration: _buildBackground(bg),
         child: SafeArea(
           child:
               tasks.isEmpty
@@ -173,6 +153,34 @@ class _TaskPageState extends State<TaskPage> {
         ),
       ),
     );
+  }
+
+  BoxDecoration _buildBackground(BackgroundProvider bg) {
+    if (bg.backgroundImage != null) {
+      return BoxDecoration(
+        image: DecorationImage(
+          image: FileImage(bg.backgroundImage!),
+          fit: BoxFit.cover,
+        ),
+      );
+    } else if (bg.backgroundAssetImage != null) {
+      return BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage(bg.backgroundAssetImage!),
+          fit: BoxFit.cover,
+        ),
+      );
+    } else if (bg.backgroundGradient != null) {
+      print("漸層");
+      return BoxDecoration(
+        gradient: bg.backgroundGradient, // ← 直接使用 provider 中的 gradient
+      );
+    } else {
+      print("純色");
+      return BoxDecoration(
+        color: bg.backgroundColor, // 純色
+      );
+    }
   }
 
   void _addTaskDialog() {

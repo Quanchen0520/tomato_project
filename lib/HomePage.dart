@@ -32,8 +32,8 @@ class _HomepageState extends State<Homepage>
   Timer? timer; // 用來控制倒數
   int remainingSeconds = 0; // 剩餘秒數
 
-  int workDuration = 1;
-  int breakDuration = 1;
+  int workDuration = 25;
+  int breakDuration = 5;
   bool isTimerRunning = false;
   bool isMusicPlaying = false;
   bool isWorkMode = true;
@@ -187,28 +187,7 @@ class _HomepageState extends State<Homepage>
     final bg = Provider.of<BackgroundProvider>(context);
     return Scaffold(
       body: Container(
-        decoration:
-            bg.backgroundImage != null
-                ? BoxDecoration(
-                  image: DecorationImage(
-                    image: FileImage(bg.backgroundImage!),
-                    fit: BoxFit.cover,
-                  ),
-                )
-                : bg.backgroundAssetImage != null
-                ? BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage(bg.backgroundAssetImage!),
-                    fit: BoxFit.cover,
-                  ),
-                )
-                : BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [bg.backgroundColor, Colors.blue.shade300],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
+        decoration: _buildBackground(bg),
         child: SafeArea(
           child: Column(
             children: [
@@ -218,6 +197,7 @@ class _HomepageState extends State<Homepage>
                 _chooseTaskDialog();
               }),
               const SizedBox(height: 8),
+              // 工作/休息標題
               Text(
                 isWorkMode ? 'Work Time' : 'Rest Time',
                 style: const TextStyle(
@@ -235,6 +215,7 @@ class _HomepageState extends State<Homepage>
                 ),
               ),
               const SizedBox(height: 8),
+              // 時鐘
               SizedBox(
                 height: 300,
                 child: Center(
@@ -249,17 +230,17 @@ class _HomepageState extends State<Homepage>
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _iconButton(
+                  _glassIconButton(
                     isMusicPlaying ? Icons.music_note : Icons.music_off,
                     isMusicPlaying ? _stopMusic : _playMusic,
                   ),
                   const SizedBox(width: 16),
-                  _iconButton(
+                  _glassIconButton(
                     isTimerRunning ? Icons.stop : Icons.play_arrow,
                     isTimerRunning ? _pauseTimer : _startTimer,
                   ),
                   const SizedBox(width: 16),
-                  _iconButton(Icons.refresh, _resetTimer),
+                  _glassIconButton(Icons.refresh, _resetTimer),
                 ],
               ),
               const SizedBox(height: 16),
@@ -321,6 +302,7 @@ class _HomepageState extends State<Homepage>
     );
   }
 
+  // 選擇任務對話框
   void _chooseTaskDialog() async {
     final taskProvider = context.read<TaskProvider>();
     int? selectedIndex; // 用來記錄目前選中的任務 index
@@ -483,65 +465,36 @@ class _HomepageState extends State<Homepage>
     );
   }
 
-  // Future<void> _showNotification() async {
-  //   // Android 平台的通知詳細設定
-  //   const AndroidNotificationDetails androidPlatformChannelSpecifics =
-  //       AndroidNotificationDetails(
-  //         'your_channel_id', // 通知頻道 ID
-  //         'your_channel_name', // 通知頻道名稱
-  //         channelDescription: '這是一個測試通知頻道',
-  //         importance: Importance.max,
-  //         priority: Priority.high,
-  //         showWhen: true,
-  //       );
-  //
-  //   // iOS 通知細節
-  //   const DarwinNotificationDetails iOSPlatformChannelSpecifics =
-  //       DarwinNotificationDetails(
-  //         presentAlert: true, // 確保應用程式在前台時顯示警報
-  //         presentBadge: true, // 確保當應用程式處於前台時徽章會更新
-  //         presentSound: true, // 確保應用程式在前台時播放聲音
-  //       );
-  //
-  //   // 組合各平台的通知詳細設定
-  //   const NotificationDetails platformChannelSpecifics = NotificationDetails(
-  //     android: androidPlatformChannelSpecifics,
-  //     iOS: iOSPlatformChannelSpecifics,
-  //   );
-  //
-  //   // 顯示通知
-  //   await flutterLocalNotificationsPlugin.show(
-  //     0, // ID
-  //     'Notifications', // Title
-  //     'Notifications!!!', // Message
-  //     platformChannelSpecifics,
-  //     payload: 'test_payload',
-  //   );
-  // }
+  // 根據背景設定建立 BoxDecoration
+  BoxDecoration _buildBackground(BackgroundProvider bg) {
+    if (bg.backgroundImage != null) {
+      return BoxDecoration(
+        image: DecorationImage(
+          image: FileImage(bg.backgroundImage!),
+          fit: BoxFit.cover,
+        ),
+      );
+    } else if (bg.backgroundAssetImage != null) {
+      return BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage(bg.backgroundAssetImage!),
+          fit: BoxFit.cover,
+        ),
+      );
+    } else if (bg.backgroundGradient != null) {
+      print("漸層");
+      return BoxDecoration(
+        gradient: bg.backgroundGradient, // ← 直接使用 provider 中的 gradient
+      );
+    } else {
+      print("純色");
+      return BoxDecoration(
+        color: bg.backgroundColor, // 純色
+      );
+    }
+  }
 
-  // Future<void> scheduleNotification(
-  //     {required int seconds, required String title, required String body}) async {
-  //   await flutterLocalNotificationsPlugin.zonedSchedule(
-  //     0,
-  //     title,
-  //     body,
-  //     tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds)),
-  //     NotificationDetails(
-  //       android: AndroidNotificationDetails(
-  //         'channel_id',
-  //         'channel_name',
-  //         importance: Importance.high,
-  //         priority: Priority.high,
-  //       ),
-  //       iOS: DarwinNotificationDetails(),
-  //     ),
-  //     androidAllowWhileIdle: true,
-  //     uiLocalNotificationDateInterpretation:
-  //     UILocalNotificationDateInterpretation.absoluteTime,
-  //     matchDateTimeComponents: DateTimeComponents.time,
-  //   );
-  // }
-
+  // 玻璃按鈕
   Widget _glassButton(String text, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -566,32 +519,72 @@ class _HomepageState extends State<Homepage>
     );
   }
 
-  Widget _iconButton(IconData icon, VoidCallback onTap) {
+  // 玻璃圓形圖示按鈕
+  Widget _glassIconButton(IconData icon, VoidCallback onTap) {
     final bg = Provider.of<BackgroundProvider>(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [bg.backgroundColor, Colors.blue.shade300],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 4,
-              offset: Offset(2, 2),
-            ),
-          ],
-        ),
+        decoration:
+            bg.backgroundImage != null
+                ? BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(2, 2),
+                    ),
+                  ],
+                )
+                : bg.backgroundAssetImage != null
+                ? BoxDecoration(
+                  color: Colors.white,
+                  gradient: LinearGradient(
+                    colors: [Colors.white70, Colors.white30],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(2, 2),
+                    ),
+                  ],
+                )
+                : bg.backgroundGradient != null
+                ? BoxDecoration(
+                  gradient: bg.backgroundGradient,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(2, 2),
+                    ),
+                  ],
+                )
+                : BoxDecoration(
+                  color: bg.backgroundColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 4,
+                      offset: Offset(2, 2),
+                    ),
+                  ],
+                ),
         child: Icon(icon, color: Colors.white, size: 32),
       ),
     );
   }
 
+  // 玻璃卡片
   Widget _glassCard(Widget child) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(32),
@@ -609,6 +602,7 @@ class _HomepageState extends State<Homepage>
     );
   }
 
+  // 建立數位時鐘
   Widget _buildDigitalClock() {
     int totalSeconds = isWorkMode ? workDuration * 60 : breakDuration * 60;
     int elapsedSeconds = (_animationController.value * totalSeconds).round();
@@ -632,6 +626,7 @@ class _HomepageState extends State<Homepage>
     );
   }
 
+  // 建立數字時鐘
   Widget _buildAnalogClock() {
     return AnimatedBuilder(
       animation: _animationController,
