@@ -52,7 +52,7 @@ class BackgroundProvider extends ChangeNotifier {
 
   /// 清除背景
   Future<void> clearBackground() async {
-    backgroundColor = Colors.purple.shade400;
+    backgroundColor = Colors.blue;
     backgroundGradient = null;
     backgroundImage = null;
     backgroundAssetImage = null;

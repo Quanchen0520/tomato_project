@@ -31,7 +31,6 @@ class _HomepageState extends State<Homepage>
   bool isRunning = false; // 計時是否正在進行
   Timer? timer; // 用來控制倒數
   int remainingSeconds = 0; // 剩餘秒數
-
   int workDuration = 25;
   int breakDuration = 5;
   bool isTimerRunning = false;
@@ -75,7 +74,7 @@ class _HomepageState extends State<Homepage>
                     seconds: breakDuration * 60,
                   );
                   _animationController.reset();
-                  _animationController.forward();
+                  _animationController.forward(); // This starts the rest timer animation
                 } else {
                   // ✅ 休息完成 → 回到工作
                   isWorkMode = true;
@@ -84,6 +83,25 @@ class _HomepageState extends State<Homepage>
               });
             }
           });
+    // ..addStatusListener((status) {
+          //   if (status == AnimationStatus.completed) {
+          //     setState(() {
+          //       if (isWorkMode) {
+          //         // ✅ 工作完成 → 進入休息
+          //         isWorkMode = false;
+          //         _animationController.duration = Duration(
+          //           seconds: breakDuration * 60,
+          //         );
+          //         _animationController.reset();
+          //         _animationController.forward();
+          //       } else {
+          //         // ✅ 休息完成 → 回到工作
+          //         isWorkMode = true;
+          //         _resetTimer();
+          //       }
+          //     });
+          //   }
+          // });
   }
 
   // 釋放資源
@@ -169,6 +187,8 @@ class _HomepageState extends State<Homepage>
     await _audioPlayer.stop();
     setState(() => isMusicPlaying = false);
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -482,12 +502,10 @@ class _HomepageState extends State<Homepage>
         ),
       );
     } else if (bg.backgroundGradient != null) {
-      print("漸層");
       return BoxDecoration(
         gradient: bg.backgroundGradient, // ← 直接使用 provider 中的 gradient
       );
     } else {
-      print("純色");
       return BoxDecoration(
         color: bg.backgroundColor, // 純色
       );
@@ -646,4 +664,104 @@ class _HomepageState extends State<Homepage>
       },
     );
   }
+
+  // import 'dart:isolate';
+  // import 'dart:ui';
+  // import 'package:shared_preferences/shared_preferences.dart';
+  // import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+  // // 假設您的 SharedPreferences keys 和通知設定在這裡
+  // // (與您前景 App 中使用的相同)
+  //
+  // const String backgroundTaskPortName = 'background_task_port';
+  //
+  // // --- SharedPreferences Keys (與前景 App 保持一致) ---
+  // const String _isWorkModeKey = 'isWorkMode';
+  // const String _workDurationKey = 'workDuration';
+  // const String _breakDurationKey = 'breakDuration';
+  // // 可能還需要 _currentPomodorosKey, _longBreakDurationKey 等
+  //
+  // FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  //
+  // // 背景任務執行的頂層函式
+  // @pragma('vm:entry-point') // 確保 AOT 編譯時能找到
+  // void backgroundTimerCallback() async {
+  //   print("Alarm Fired! [${DateTime.now()}]");
+  //   // 初始化 SharedPreferences
+  //   final prefs = await SharedPreferences.getInstance();
+  //
+  //   // 初始化通知 (與 App 內類似，但這裡不需要 onDidReceiveNotificationResponse)
+  //   const AndroidInitializationSettings initializationSettingsAndroid =
+  //   AndroidInitializationSettings('@mipmap/ic_launcher'); // 確保圖示存在
+  //   const DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings(); // iOS 在此情境下作用不大
+  //   const InitializationSettings initializationSettings =
+  //   InitializationSettings(android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
+  //   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  //
+  //   bool currentIsWorkMode = prefs.getBool(_isWorkModeKey) ?? true;
+  //   int workDuration = prefs.getInt(_workDurationKey) ?? 25;
+  //   int breakDuration = prefs.getInt(_breakDurationKey) ?? 5;
+  //
+  //   if (currentIsWorkMode) {
+  //     // 工作結束，切換到休息
+  //     print("Background: Work ended. Starting break.");
+  //     await prefs.setBool(_isWorkModeKey, false); // 更新狀態為休息模式
+  //
+  //     // 排程下一個鬧鐘 (休息結束時)
+  //     await AndroidAlarmManager.oneShot(
+  //       Duration(minutes: breakDuration),
+  //       1, // 休息鬧鐘的 ID (不同於工作鬧鐘)
+  //       backgroundTimerCallback, // 再次呼叫此函式
+  //       exact: true,
+  //       wakeup: true, // 嘗試喚醒設備
+  //     );
+  //
+  //     // 發送休息開始的通知
+  //     await _showNotification(
+  //         title: "休息時間開始！",
+  //         body: "好好休息 ${breakDuration} 分鐘。",
+  //         notificationId: 101 // 通知 ID
+  //     );
+  //   } else {
+  //     // 休息結束，切換回工作
+  //     print("Background: Break ended. Starting work.");
+  //     await prefs.setBool(_isWorkModeKey, true); // 更新狀態為工作模式
+  //
+  //     // 排程下一個鬧鐘 (工作結束時)
+  //     await AndroidAlarmManager.oneShot(
+  //       Duration(minutes: workDuration),
+  //       0, // 工作鬧鐘的 ID
+  //       backgroundTimerCallback,
+  //       exact: true,
+  //       wakeup: true,
+  //     );
+  //
+  //     // 發送工作開始的通知
+  //     await _showNotification(
+  //         title: "工作時間到！",
+  //         body: "開始 ${workDuration} 分鐘的專注工作。",
+  //         notificationId: 102 // 通知 ID
+  //     );
+  //   }
+  //
+  //   // 為了能從主 Isolate 監聽，可以選擇性地發送訊息
+  //   final SendPort? sendPort = IsolateNameServer.lookupPortByName(backgroundTaskPortName);
+  //   sendPort?.send("Timer mode switched in background");
+  // }
+  //
+  // Future<void> _showNotification({required String title, required String body, required int notificationId}) async {
+  //   const AndroidNotificationDetails androidPlatformChannelSpecifics =
+  //   AndroidNotificationDetails('pomodoro_channel_id', 'Pomodoro Channel', // channel ID 和 name
+  //       channelDescription: 'Channel for Pomodoro timer notifications', // channel description
+  //       importance: Importance.max,
+  //       priority: Priority.high,
+  //       playSound: true,
+  //       // sound: RawResourceAndroidNotificationSound('notification_sound'), // 如果有自訂音效
+  //       ticker: 'ticker');
+  //   const NotificationDetails platformChannelSpecifics =
+  //   NotificationDetails(android: androidPlatformChannelSpecifics);
+  //   await flutterLocalNotificationsPlugin.show(
+  //       notificationId, title, body, platformChannelSpecifics,
+  //       payload: 'TimerNotificationPayload'); // payload 可以用來處理點擊
+  // }
+
 }

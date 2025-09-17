@@ -86,6 +86,7 @@ class SettingTile extends StatelessWidget {
 /// 區塊標題
 class SectionTitle extends StatelessWidget {
   final String text;
+
   const SectionTitle(this.text, {super.key});
 
   @override
@@ -108,6 +109,7 @@ class SectionTitle extends StatelessWidget {
 /// 玻璃卡片樣式容器
 class GlassCard extends StatelessWidget {
   final List<Widget> children;
+
   const GlassCard({super.key, required this.children});
 
   @override
@@ -172,9 +174,9 @@ class _SettingPageState extends State<SettingPage> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -205,7 +207,9 @@ class _SettingPageState extends State<SettingPage> {
                   SettingTile(
                     icon: Icons.person,
                     title: "Account",
-                    onTap: () {},
+                    onTap: () {
+                      _showAccountDialog();
+                    },
                   ),
                   const Divider(color: Colors.white24, height: 1),
                   SettingTile(
@@ -247,7 +251,9 @@ class _SettingPageState extends State<SettingPage> {
                   SettingTile(
                     icon: Icons.explore,
                     title: "Instructions for use",
-                    onTap: () {},
+                    onTap: () {
+                      _showInstructionsForUserDialog();
+                    },
                   ),
                   const Divider(color: Colors.white24, height: 1),
                   SettingTile(
@@ -327,6 +333,80 @@ class _SettingPageState extends State<SettingPage> {
     }
   }
 
+  void _showAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return GlassDialog(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Account Info",
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+              const SizedBox(height: 12),
+              const Text("User:"),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showInstructionsForUserDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return GlassDialog(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Instructions For User",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: const Text(
+                    "1. Pomodoro Timer\n"
+                    "* Mainly helps you focus on a single task and avoid distractions.\n"
+                    "* You can customize your work time (e.g., 25 minutes, 50 minutes, etc.).\n"
+                    "* During your work, the Pomodoro Timer will count down to help you stay focused.\n\n"
+                    "2. Short Break\n"
+                    "* Automatically reminds you to take a break after each work session.\n"
+                    "* Customizable break duration (e.g., 5 minutes, 10 minutes).\n"
+                    "* Helps you relax your eyes and brain, preventing fatigue.\n\n"
+                    "3. Long Break\n"
+                    "* After a period of multiple work sessions (e.g., 4 Pomodoros), you'll be reminded to take a long break.\n"
+                    "* Customizable long breaks (e.g., 15–30 minutes).\n"
+                    "* Helps you recover energy and improve your ability to focus for extended periods.\n\n"
+                    "4. Pomodoro Statistics and History\n"
+                    "* Records the number of Pomodoros completed each day.\n"
+                    "* Tracks your work efficiency and focus time. * View your work patterns for a week or a month.\n\n"
+                    "5. Customization\n"
+                    "* Set different work and rest times for different tasks.\n"
+                    "* Supports multiple task lists for easy switching and management.\n"
+                    "* Adjust the Pomodoro timer rhythm based on your focus level.\n\n"
+                    "6. Reminders and Notifications\n"
+                    "* Receive a reminder or alarm when your work or rest time ends.\n"
+                    "* Choose from sound, vibration, or visual notifications.\n",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // ------------------------- 背景選擇 Dialog -------------------------
   void _showBackgroundDialog() {
     showDialog(
@@ -336,18 +416,26 @@ class _SettingPageState extends State<SettingPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("選擇背景類型",
-                  style: TextStyle(color: Colors.white, fontSize: 18)),
+              const Text(
+                "Select Background Type",
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
               const SizedBox(height: 12),
               ListTile(
-                title: const Text("圖片", style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  "Image",
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _showImageOptions();
                 },
               ),
               ListTile(
-                title: const Text("顏色", style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  "Color",
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _showColorOptions();
@@ -369,8 +457,10 @@ class _SettingPageState extends State<SettingPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("選擇圖片",
-                  style: TextStyle(color: Colors.white, fontSize: 18)),
+              const Text(
+                "Select picture",
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
               const SizedBox(height: 12),
               GridView.count(
                 crossAxisCount: 3,
@@ -384,8 +474,10 @@ class _SettingPageState extends State<SettingPage> {
               ),
               const SizedBox(height: 12),
               ListTile(
-                title:
-                const Text("從相簿匯入", style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  "Import from Album",
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () async {
                   final picked = await ImagePicker().pickImage(
                     source: ImageSource.gallery,
@@ -419,18 +511,26 @@ class _SettingPageState extends State<SettingPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Choose Color Type",
-                  style: TextStyle(color: Colors.white, fontSize: 18)),
+              const Text(
+                "Choose Color Type",
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
               const SizedBox(height: 12),
               ListTile(
-                title: const Text("純色", style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  "Solid color",
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _showSolidColorPicker();
                 },
               ),
               ListTile(
-                title: const Text("漸層", style: TextStyle(color: Colors.white)),
+                title: const Text(
+                  "Gradient",
+                  style: TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _showGradientPicker();
@@ -453,8 +553,10 @@ class _SettingPageState extends State<SettingPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Choose Solid Color",
-                  style: TextStyle(color: Colors.white, fontSize: 12)),
+              const Text(
+                "Choose Solid Color",
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
               const SizedBox(height: 12),
               BlockPicker(
                 pickerColor: bg.backgroundColor,
@@ -464,8 +566,10 @@ class _SettingPageState extends State<SettingPage> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text("完成",
-                      style: TextStyle(color: Colors.white)),
+                  child: const Text(
+                    "完成",
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ),
             ],
@@ -480,18 +584,20 @@ class _SettingPageState extends State<SettingPage> {
     final gradients = [
       // 這些是預設的漸層顏色組合
       // 每個子列表代表一個漸層的顏色
+
       // 例如：[開始顏色, 結束顏色]
-      [Colors.purple.shade300, Colors.blue.shade300], // 紫色到藍色
-      [Colors.orange.shade300, Colors.red.shade300],   // 橘色到紅色
-      [Colors.green.shade300, Colors.teal.shade300],   // 綠色到藍綠色
-      // 您可以根據需要新增更多漸層組合
+      [Colors.purple.shade600, Colors.blue.shade300], // 紫色到藍色
+      [Colors.orange.shade300, Colors.red.shade300], // 橘色到紅色
+      [Colors.green.shade300, Colors.teal.shade300], // 綠色到藍綠色
       [const Color(0xFFF8BBD0), const Color(0xFFEC407A)], // 淺粉紅到深粉紅
       [const Color(0xFF80DEEA), const Color(0xFF00ACC1)], // 淺藍綠到藍綠
+      [const Color(0xFFF6DD65), const Color(0xFFFDA085)],
     ];
 
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) { // 建議為 builder 的 context 加上型別
+      builder: (BuildContext dialogContext) {
+        // 建議為 builder 的 context 加上型別
         return GlassDialog(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -501,54 +607,47 @@ class _SettingPageState extends State<SettingPage> {
                 padding: EdgeInsets.only(bottom: 16.0), // 增加標題和選項間的距離
                 child: Text(
                   "Choose Gradient",
-                  textAlign: TextAlign.center, // 標題置中
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20, // 稍微加大字體
-                      fontWeight: FontWeight.bold),
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              ...gradients.map((colorList) { // 將 'g' 改名為 'colorList' 更清晰
-                // 建立預覽用的 LinearGradient
+              ...gradients.map((colorList) {
                 final previewGradient = LinearGradient(
                   colors: colorList,
-                  begin: Alignment.centerLeft, // 預覽用，可以簡單一點
+                  begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 );
 
                 return GestureDetector(
                   onTap: () {
-                    // 建立要應用的 LinearGradient
-                    // 您可以設定不同的 begin 和 end 來改變漸層方向
                     final selectedGradient = LinearGradient(
                       colors: colorList,
-                      begin: Alignment.topLeft, // 例如：左上到右下
+                      begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       // stops: [0.0, 1.0], // 可選：控制顏色過渡的位置
                     );
-
-                    // 呼叫 Provider 中的 setGradient 方法
                     bg.setGradient(selectedGradient);
                     Navigator.pop(dialogContext); // 使用 dialogContext 來關閉 Dialog
                   },
                   child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0), // 調整間距
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 4.0,
+                    ), // 調整間距
                     height: 50, // 稍微加高選項
                     decoration: BoxDecoration(
-                        gradient: previewGradient, // 應用預覽漸層
-                        borderRadius: BorderRadius.circular(12), // 調整圓角
-                        border: Border.all( // 可選：增加邊框
-                          color: Colors.white.withOpacity(0.5),
-                          width: 1,
-                        )
+                      gradient: previewGradient, // 應用預覽漸層
+                      borderRadius: BorderRadius.circular(12), // 調整圓角
+                      border: Border.all(
+                        // 可選：增加邊框
+                        color: Colors.white.withOpacity(0.5),
+                        width: 1,
+                      ),
                     ),
-                    // 可選：在漸層條上顯示文字或圖示
-                    // child: Center(
-                    //   child: Text(
-                    //     "Gradient Option",
-                    //     style: TextStyle(color: Colors.white.withOpacity(0.8)),
-                    //   ),
-                    // ),
                   ),
                 );
               }).toList(),
@@ -569,5 +668,4 @@ class _SettingPageState extends State<SettingPage> {
       },
     );
   }
-
 }

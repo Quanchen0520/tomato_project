@@ -11,10 +11,8 @@ import 'package:tomato_project/SplashScreen.dart';
 import 'package:tomato_project/provider/background_provider.dart';
 import 'package:tomato_project/provider/mode_Provider.dart';
 import 'package:tomato_project/provider/task_provider.dart';
-
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-
 import 'notification_service.dart';
 
 
@@ -53,8 +51,7 @@ void main() async {
   tz.initializeTimeZones();
   tz.setLocalLocation(tz.getLocation('Asia/Taipei'));
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
-  // await NotificationService.init();
+  // await AndroidAlarmManager.initialize();
 
   runApp(
     MultiProvider(
@@ -78,7 +75,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => Apppagecontroller(), // Splash_Screen
+        '/': (context) => Splash_Screen(),
         '/login': (context) => Loginpage(),
         '/register': (context) => RegisterPage(),
         '/home': (context) => Apppagecontroller(),
