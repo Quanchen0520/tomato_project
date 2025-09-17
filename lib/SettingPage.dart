@@ -274,37 +274,6 @@ class _SettingPageState extends State<SettingPage> {
     );
   }
 
-  // ------------------------- 背景 -------------------------
-  // BoxDecoration _buildBackground(BackgroundProvider bg) {
-  //   if (bg.backgroundImage != null) {
-  //     return BoxDecoration(
-  //       image: DecorationImage(
-  //         image: FileImage(bg.backgroundImage!),
-  //         fit: BoxFit.cover,
-  //       ),
-  //     );
-  //   } else if (bg.backgroundAssetImage != null) {
-  //     return BoxDecoration(
-  //       image: DecorationImage(
-  //         image: AssetImage(bg.backgroundAssetImage!),
-  //         fit: BoxFit.cover,
-  //       ),
-  //     );
-  //   } else if (bg.backgroundGradient != null) {
-  //     return BoxDecoration(
-  //       gradient: LinearGradient(
-  //         colors: [bg.backgroundColor, Colors.blue.shade300],
-  //         begin: Alignment.topLeft,
-  //         end: Alignment.bottomRight,
-  //       ),
-  //     );
-  // } else {
-  //     return BoxDecoration(
-  //       color: bg.backgroundColor, // 純色
-  //     );
-  //   }
-  // }
-
   BoxDecoration _buildBackground(BackgroundProvider bg) {
     if (bg.backgroundImage != null) {
       return BoxDecoration(
@@ -321,12 +290,10 @@ class _SettingPageState extends State<SettingPage> {
         ),
       );
     } else if (bg.backgroundGradient != null) {
-      print("漸層");
       return BoxDecoration(
         gradient: bg.backgroundGradient, // ← 直接使用 provider 中的 gradient
       );
     } else {
-      print("純色");
       return BoxDecoration(
         color: bg.backgroundColor, // 純色
       );
@@ -545,7 +512,6 @@ class _SettingPageState extends State<SettingPage> {
 
   void _showSolidColorPicker() {
     final bg = context.read<BackgroundProvider>();
-    // bg.clearGradient();
     showDialog(
       context: context,
       builder: (context) {
@@ -567,7 +533,7 @@ class _SettingPageState extends State<SettingPage> {
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text(
-                    "完成",
+                    "finish",
                     style: TextStyle(color: Colors.white),
                   ),
                 ),

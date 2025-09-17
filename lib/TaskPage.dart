@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tomato_project/provider/background_provider.dart';
 import 'package:tomato_project/provider/task_provider.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class TaskPage extends StatefulWidget {
   const TaskPage({super.key});
@@ -83,6 +84,14 @@ class _TaskPageState extends State<TaskPage> {
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart, size: 28),
+            onPressed: () {
+              showStatsDialog(context); // ⬅️ 呼叫圖表 Dialog
+            },
+          ),
+        ],
       ),
       extendBodyBehindAppBar: true,
       body: Container(
@@ -448,6 +457,84 @@ class _TaskPageState extends State<TaskPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
+      ),
+    );
+  }
+
+  void showStatsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        backgroundColor: Colors.white.withOpacity(0.15), // 毛玻璃風格底色
+        content: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: SizedBox(
+              width: 300,
+              height: 400,
+              child: Column(
+                children: [
+                  const Text(
+                    "7 Day Statistics",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 20), // 間距
+                  Expanded( // 這裡用 Expanded 限制 BarChart 撐滿剩下空間
+                    child: BarChart(
+                      BarChartData(
+                        alignment: BarChartAlignment.spaceAround,
+                        barTouchData: BarTouchData(enabled: true),
+                        titlesData: FlTitlesData(
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(showTitles: true, reservedSize: 28),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              getTitlesWidget: (value, meta) {
+                                const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+                                if (value.toInt() >= 0 && value.toInt() < days.length) {
+                                  return Text(days[value.toInt()],
+                                      style: const TextStyle(color: Colors.white, fontSize: 12));
+                                }
+                                return const SizedBox();
+                              },
+                            ),
+                          ),
+                        ),
+                        borderData: FlBorderData(show: false),
+                        barGroups: [
+                          BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 30, color: Colors.blue)]),
+                          BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 50, color: Colors.green)]),
+                          BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 80, color: Colors.purple)]),
+                          BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 40, color: Colors.orange)]),
+                          BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 70, color: Colors.red)]),
+                          BarChartGroupData(x: 5, barRods: [BarChartRodData(toY: 20, color: Colors.cyan)]),
+                          BarChartGroupData(x: 6, barRods: [BarChartRodData(toY: 90, color: Colors.teal)]),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("close", style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }
